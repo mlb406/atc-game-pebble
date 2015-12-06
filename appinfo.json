@@ -1,0 +1,22 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "mlb406@gmail.com",
+    "longName": "atc-game",
+    "projectType": "native",
+    "resources": {
+        "media": []
+    },
+    "sdkVersion": "3",
+    "shortName": "atc-game",
+    "targetPlatforms": [
+        "basalt"
+    ],
+    "uuid": "55241b69-48a6-4486-af8a-f315f5959008",
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": false
+    }
+}

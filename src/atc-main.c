@@ -1,15 +1,17 @@
 #include <pebble.h>
 #include "atc-main.h"
 
+//remember to include random spawning - fix this
+
 #define KEY_HEADING 1
 
 static Window *window, *heading_window;
-static TextLayer *heading_layer;
+static TextLayer *heading_layer, *app_layer;
 static Layer *airport_layer, *fix_layer, *plane_layer;
 static int selected_plane; // use this to choose plane to edit
 static int shown_window = 1;
 static int heading_buffer_passed = 0;
-
+static AppTimer *app_timer_text;
 
 //PLANE_1 VARS
 static GPath *plane_1_path;
@@ -74,7 +76,7 @@ static void move_plane(int plane) {
 
 static void plane_1_timer_handler(void *data) {
   move_plane(1);
-  plane_1_timer = app_timer_register(2500, plane_1_timer_handler, NULL);
+  plane_1_timer = app_timer_register(2000, plane_1_timer_handler, NULL);
 }
 
 static void select_hide_menu();
@@ -191,12 +193,19 @@ static void main_window_load() {
   layer_set_update_proc(plane_layer, plane_update_proc);
   layer_add_child(window_layer, plane_layer);
   
+  app_layer = text_layer_create(GRect(0, 0, 144, 168));
+  text_layer_set_text_alignment(app_layer, GTextAlignmentCenter);
+  text_layer_set_text_color(app_layer, GColorFromHEX(0x00FF00));
+  text_layer_set_background_color(app_layer, GColorClear);
+  text_layer_set_font(app_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+  layer_add_child(window_layer, text_layer_get_layer(app_layer));
 }
 
 static void main_window_unload() {
   layer_destroy(airport_layer);
   layer_destroy(fix_layer);
   gpath_destroy(plane_1_path);
+  text_layer_destroy(app_layer);
 }
 /*
 static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
@@ -223,17 +232,17 @@ static void app_move(void *data) {
       case 0:
         gpath_move_to(plane_1_path, GPoint(110, 60));
         app_progress++;
-        plane_1_app_timer = app_timer_register(2500, app_move, NULL);
+        plane_1_app_timer = app_timer_register(2000, app_move, NULL);
         break;
       case 1:
         gpath_move_to(plane_1_path, GPoint(96, 63));
         app_progress++;
-        plane_1_app_timer = app_timer_register(2500, app_move, NULL);
+        plane_1_app_timer = app_timer_register(2000, app_move, NULL);
         break;
       case 2:
         gpath_move_to(plane_1_path, GPoint(83, 66));
         app_progress++;
-        plane_1_app_timer = app_timer_register(2500, app_move, NULL);
+        plane_1_app_timer = app_timer_register(2000, app_move, NULL);
         break;
     }
     layer_mark_dirty(window_get_root_layer(window));
@@ -250,7 +259,11 @@ static void clear_approach(int plane) {
   rotate_plane(plane, 190);
   app_timer_cancel(plane_1_timer);
   app_move(NULL);
-  plane_1_app_timer = app_timer_register(1000, app_move, NULL);
+  plane_1_app_timer = app_timer_register(1500, app_move, NULL);
+}
+
+static void remove_app_text(void *data) {
+  text_layer_set_text(app_layer, "");
 }
 
 static void select_long_handler(ClickRecognizerRef recognizer, void *context) {
@@ -260,7 +273,8 @@ static void select_long_handler(ClickRecognizerRef recognizer, void *context) {
         if (plane_1_y < 65) {
           clear_approach(1);
           APP_LOG(APP_LOG_LEVEL_DEBUG, "Cleared for approach!");
-          
+          text_layer_set_text(app_layer, "Cleared for approach!");
+          app_timer_text = app_timer_register(2500, remove_app_text, NULL);
         }
       }
     }
@@ -288,11 +302,35 @@ static void init() {
   
   window_stack_push(window, true);
   
-  plane_1_path = gpath_create(&plane_1_points);
-  gpath_move_to(plane_1_path, GPoint(72, 150));
+  int temp_loc = rand() % 2;
   
-  plane_1_timer = app_timer_register(2500, plane_1_timer_handler, NULL);
-  move_plane(1);
+  plane_1_path = gpath_create(&plane_1_points);
+  
+  switch(temp_loc) {
+    case 0:
+      plane_1_x = 143;
+      plane_1_y = 142;
+      gpath_move_to(plane_1_path, GPoint(143, 142));
+      rotate_plane(1, 315);
+      break;
+    case 1:
+      plane_1_x = 126;
+      plane_1_y = 1;
+      gpath_move_to(plane_1_path, GPoint(126, 1));
+      rotate_plane(1, 225);
+      break;
+    case 2:
+      plane_1_x = 1;
+      plane_1_y = 132;
+      gpath_move_to(plane_1_path, GPoint(1, 132));
+      rotate_plane(1, 90);
+      break;
+  }
+  
+  
+  
+  plane_1_timer = app_timer_register(2000, plane_1_timer_handler, NULL);
+  move_plane(1); 
 }
 
 static void deinit() {
